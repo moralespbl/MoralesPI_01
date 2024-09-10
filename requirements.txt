@@ -4,6 +4,8 @@ exceptiongroup==1.2.2
 fastapi==0.114.0
 h11==0.14.0
 idna==3.8
+matplotlib==3.9.2
+matplotlib-inline==0.1.7
 numpy==2.1.1
 pandas==2.2.2
 pydantic==2.9.1
