@@ -4,21 +4,27 @@ import pandas as pd
 import json as json
 import matplotlib.pyplot as plt
 
+app = FastAPI()
 
-dfMoviesFinal = pd.read_parquet('Data/dfMoviesFinal.parquet')
-dfCreditsFinal = pd.read_parquet('Data/dfCreditsFinal.parquet')
 
-# Eliminar filas donde 'id_pelicula' no es convertible a float
-dfMoviesFinal = dfMoviesFinal[dfMoviesFinal['id_pelicula'].astype(str).str.replace('.', '', regex=False).str.isnumeric()]
-dfCreditsFinal = dfCreditsFinal[dfCreditsFinal['id_pelicula'].astype(str).str.replace('.', '', regex=False).str.isnumeric()]
+# Cargar data frames
+dfMoviesFinal = pd.read_parquet('DataSets/dfMoviesSintetico.parquet')
+dfCrewFinal = pd.read_parquet('DataSets/dfCrew.parquet')
+dfCastFinal = pd.read_parquet('DataSets/dfCastFinal.parquet')
 
-# Convertir la columna 'id_pelicula' a tipo float en ambos DataFrames
+
+# Convertir la columna 'id_pelicula' a tipo float DataFrames
 dfMoviesFinal['id_pelicula'] = dfMoviesFinal['id_pelicula'].astype(float)
-dfCreditsFinal['id_pelicula'] = dfCreditsFinal['id_pelicula'].astype(float)
+dfCrewFinal['id_pelicula'] = dfCrewFinal['id_pelicula'].astype(float)
+dfCastFinal['id_pelicula'] = dfCastFinal['id_pelicula'].astype(float)
+
+# Convertir 'id_pelicula' en dfMoviesFinal a tipo str
+
+
 # Convertir la columna 'release_date' a tipo datetime
 dfMoviesFinal['release_date'] = pd.to_datetime(dfMoviesFinal['release_date'])
 
-
+@app.get("/filmaciones/mes/{mes}")
 def cantidad_filmaciones_mes(mes: str):
     meses_dict = {
         'enero': 1, 'febrero': 2, 'marzo': 3, 'abril': 4, 'mayo': 5, 'junio': 6,
@@ -36,6 +42,7 @@ def cantidad_filmaciones_mes(mes: str):
     return f"{cantidad} películas fueron estrenadas en el mes de {mes}"
 
 
+@app.get("/filmaciones/dia/{dia}")
 def cantidad_filmaciones_dia(dia):
 
     dias_dict = {
@@ -55,6 +62,7 @@ def cantidad_filmaciones_dia(dia):
     return f"{cantidad} cantidad de películas fueron estrenadas en los días {dia}"
 
 
+@app.get("/peliculas/score/{titulo}")
 def score_titulo(nombre_peli: str):
 
     pelicula = dfMoviesFinal[dfMoviesFinal['title'].str.contains(nombre_peli, case=False, na=False)]
@@ -69,6 +77,7 @@ def score_titulo(nombre_peli: str):
     return f"La película '{titulo}' fue estrenada en el año {anio_estreno} con un score/popularidad de {puntuacion}."
 
 
+@app.get("/peliculas/votos/{titulo}")
 def votos_titulo(titulo_de_la_filmacion: str):
     pelicula = dfMoviesFinal[dfMoviesFinal['title'].str.contains(titulo_de_la_filmacion, case=False, na=False)]
     
@@ -87,9 +96,10 @@ def votos_titulo(titulo_de_la_filmacion: str):
             f"La misma cuenta con un total de {cantidad_votos} valoraciones, con un promedio de {promedio_votos}.")
 
 
+@app.get("/actor/{nombre_actor}")
 def get_actor(nombre_actor: str):
     # Filtrar el DataFrame dfCreditsFinal para encontrar las películas en las que ha actuado el actor
-    peliculas_actor = dfCreditsFinal[dfCreditsFinal['name_cast'].str.contains(nombre_actor, case=False, na=False)]
+    peliculas_actor = dfCastFinal[dfCastFinal['name_cast'].str.contains(nombre_actor, case=False, na=False)]
 
     # Verificar si el actor aparece en el dataset
     if peliculas_actor.empty:
@@ -112,14 +122,14 @@ def get_actor(nombre_actor: str):
         return f"El actor {nombre_actor} no tiene películas con presupuesto válido."
 
     return (f"El actor {nombre_actor} ha participado en {cantidad_peliculas} películas, "
-            f"con un retorno total de {retorno_total:.2f} y un promedio de {retorno_promedio:.2f} por filmación.")
+            f"con un retorno total de {retorno_total*100:.2f}% y un promedio de {retorno_promedio*100:.2f}% por filmación.")
 
-
+@app.get("/director/{nombre_director}")
 def get_director(nombre_director: str):
     # Filtrar el DataFrame dfCreditsFinal para encontrar las películas dirigidas por el director
-    peliculas_director = dfCreditsFinal[
-        (dfCreditsFinal['name_crew'].str.contains(nombre_director, case=False, na=False)) &
-        (dfCreditsFinal['job_crew'].str.contains('Director', case=False, na=False))
+    peliculas_director = dfCrewFinal[
+        (dfCrewFinal['name_crew'].str.contains(nombre_director, case=False, na=False)) &
+        (dfCrewFinal['job_crew'].str.contains('Director', case=False, na=False))
     ]
     
     # Verificar si el director tiene películas en el dataset
@@ -143,9 +153,9 @@ def get_director(nombre_director: str):
         resultado = (
             f"Película: {row['title']}, "
             f"Fecha de lanzamiento: {row['release_date']}, "
-            f"Retorno: {row['retorno']:.2f}, "
-            f"Costo: {row['budget']:.2f}, "
-            f"Ganancia: {row['ganancia']:.2f}"
+            f"Retorno: {row['retorno']*100:.2f}%, "
+            f"Costo: ${row['budget']:.2f}, "
+            f"Ganancia: ${row['ganancia']:.2f}"
         )
         resultados.append(resultado)
     
