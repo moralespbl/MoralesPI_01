@@ -30,6 +30,19 @@ dfMoviesFinal['release_date'] = pd.to_datetime(dfMoviesFinal['release_date'])
 
 @app.get("/filmaciones_por_mes/{mes}")
 def cantidad_filmaciones_mes(mes: str):
+    """
+    Retorna la cantidad de películas únicas que fueron estrenadas en un mes específico.
+
+    Parámetros:
+    mes (str): El nombre del mes en español (debe ser en minúsculas o mayúsculas).
+
+    Retorna:
+    str: Un mensaje indicando la cantidad de películas estrenadas en el mes solicitado.
+
+    Lanza:
+    ValueError: Si el valor de 'mes' no es válido (no corresponde a un mes en español).
+    """
+    
     meses_dict = {
         'enero': 1, 'febrero': 2, 'marzo': 3, 'abril': 4, 'mayo': 5, 'junio': 6,
         'julio': 7, 'agosto': 8, 'septiembre': 9, 'octubre': 10, 'noviembre': 11, 'diciembre': 12
@@ -44,9 +57,22 @@ def cantidad_filmaciones_mes(mes: str):
     return f"{cantidad} películas fueron estrenadas en el mes de {mes}"
 
 
-@app.get("/filmaciones/dia/{dia}")
-def cantidad_filmaciones_dia(dia):
 
+@app.get("/filmaciones/dia/{dia}")
+def cantidad_filmaciones_dia(dia: str):
+    """
+    Retorna la cantidad de películas únicas que fueron estrenadas en un día específico de la semana.
+
+    Parámetros:
+    dia (str): El nombre del día de la semana en español (debe ser en minúsculas o mayúsculas).
+
+    Retorna:
+    str: Un mensaje indicando la cantidad de películas estrenadas en el día solicitado.
+
+    Lanza:
+    ValueError: Si el valor de 'dia' no es válido (no corresponde a un día de la semana en español).
+    """
+    
     dias_dict = {
         'lunes': 1, 'martes': 2, 'miercoles': 3, 'jueves': 4, 'viernes': 5, 'sabado': 6, 'domingo': 7
     }
@@ -57,16 +83,27 @@ def cantidad_filmaciones_dia(dia):
     
     dia_numero = dias_dict[dia]
 
-    dfMoviesFinal['dia_semana'] = dfMoviesFinal['release_date'].dt.dayofweek + 1
-
-    cantidad = dfMoviesFinal[dfMoviesFinal['dia_semana'] == dia_numero]['id_pelicula'].nunique()
+    cantidad = dfMoviesFinal[dfMoviesFinal['release_date'].dt.dayofweek + 1 == dia_numero]['id_pelicula'].nunique()
     
-    return f"{cantidad} cantidad de películas fueron estrenadas en los días {dia}"
+    return f"{cantidad} películas fueron estrenadas en los días {dia}"
+
+
 
 
 @app.get("/peliculas/score/{titulo}")
+@app.get("/peliculas/score/{titulo}")
 def score_titulo(nombre_peli: str):
+    """
+    Busca la película por título y devuelve su año de estreno y puntuación de popularidad (score).
 
+    Parámetros:
+    nombre_peli (str): El nombre (o parte del nombre) de la película a buscar.
+
+    Retorna:
+    str: Un mensaje con el título exacto de la película, el año de estreno y su puntuación.
+         Si no se encuentra la película, devuelve un mensaje indicando que no fue encontrada.
+    """
+    
     pelicula = dfMoviesFinal[dfMoviesFinal['title'].str.contains(nombre_peli, case=False, na=False)]
 
     if pelicula.empty:
@@ -79,8 +116,20 @@ def score_titulo(nombre_peli: str):
     return f"La película '{titulo}' fue estrenada en el año {anio_estreno} con un score/popularidad de {puntuacion}."
 
 
+
 @app.get("/peliculas/votos/{titulo}")
 def votos_titulo(titulo_de_la_filmacion: str):
+    """
+    Busca una película por su título y devuelve la cantidad de votos y el promedio de votos si cumple con el mínimo de 2000 valoraciones.
+
+    Parámetros:
+    titulo_de_la_filmacion (str): El nombre (o parte del nombre) de la película a buscar.
+
+    Retorna:
+    str: Un mensaje con el título exacto de la película, el año de estreno, la cantidad de votos y el promedio de votos.
+         Si la película no tiene al menos 2000 valoraciones o no se encuentra, devuelve un mensaje indicando la situación.
+    """
+
     pelicula = dfMoviesFinal[dfMoviesFinal['title'].str.contains(titulo_de_la_filmacion, case=False, na=False)]
     
     if pelicula.empty:
@@ -100,25 +149,31 @@ def votos_titulo(titulo_de_la_filmacion: str):
 
 @app.get("/actor/{nombre_actor}")
 def get_actor(nombre_actor: str):
-    # Filtrar el DataFrame dfCreditsFinal para encontrar las películas en las que ha actuado el actor
+    """
+    Busca al actor en el DataFrame de películas y devuelve información sobre la cantidad de películas en las que ha participado,
+    así como el retorno total y promedio de esas películas.
+
+    Parámetros:
+    nombre_actor (str): El nombre (o parte del nombre) del actor a buscar.
+
+    Retorna:
+    str: Un mensaje con la cantidad de películas en las que ha actuado el actor, el retorno total y el retorno promedio.
+         Si el actor no aparece en el dataset o no tiene películas con presupuesto válido, devuelve un mensaje indicando la situación.
+    """
+
     peliculas_actor = dfCastFinal[dfCastFinal['name_cast'].str.contains(nombre_actor, case=False, na=False)]
 
-    # Verificar si el actor aparece en el dataset
     if peliculas_actor.empty:
         return f"No se encontró al actor {nombre_actor} en el dataset."
 
-    # Obtener las películas únicas en las que ha participado, eliminando duplicados de 'id_pelicula'
     ids_peliculas = peliculas_actor['id_pelicula'].drop_duplicates()
 
-    # Filtrar las películas en el DataFrame dfMoviesFinal usando los IDs obtenidos
     peliculas_info = dfMoviesFinal[dfMoviesFinal['id_pelicula'].isin(ids_peliculas)]
     peliculas_info = peliculas_info.drop_duplicates(subset='id_pelicula')
 
-    # Calcular el retorno total y promedio
     retorno_total = peliculas_info['return'].sum()
     retorno_promedio = retorno_total/len(ids_peliculas)
 
-    # Devolver la cantidad de películas y el retorno total y promedio
     cantidad_peliculas = len(ids_peliculas)
     if cantidad_peliculas == 0:
         return f"El actor {nombre_actor} no tiene películas con presupuesto válido."
@@ -129,28 +184,34 @@ def get_actor(nombre_actor: str):
 
 @app.get("/director/{nombre_director}")
 def get_director(nombre_director: str):
-    # Filtrar el DataFrame dfCreditsFinal para encontrar las películas dirigidas por el director
+    """
+    Busca a un director en el DataFrame de créditos y devuelve información sobre las películas que ha dirigido,
+    incluyendo el retorno, el costo y la ganancia de cada película.
+
+    Parámetros:
+    nombre_director (str): El nombre (o parte del nombre) del director a buscar.
+
+    Retorna:
+    str: Un mensaje con información de cada película dirigida por el director, mostrando el título, la fecha de lanzamiento,
+         el retorno, el costo y la ganancia. Si el director no está en el dataset, se devuelve un mensaje indicando la situación.
+    """
+
     peliculas_director = dfCrewFinal[
         (dfCrewFinal['name_crew'].str.contains(nombre_director, case=False, na=False)) &
         (dfCrewFinal['job_crew'].str.contains('Director', case=False, na=False))
     ]
     
-    # Verificar si el director tiene películas en el dataset
     if peliculas_director.empty:
         return f"El director {nombre_director} no se encuentra en el dataset."
 
-    # Obtener los IDs de las películas dirigidas por el director
     ids_peliculas = peliculas_director['id_pelicula'].unique()
     
-    # Filtrar el DataFrame dfMoviesFinal usando los IDs de las películas del director
     peliculas_info = dfMoviesFinal[dfMoviesFinal['id_pelicula'].isin(ids_peliculas)]
     peliculas_info = peliculas_info.drop_duplicates(subset='id_pelicula')
 
-    # Calcular el retorno y extraer la información de las películas
     peliculas_info['ganancia'] = peliculas_info['revenue'] - peliculas_info['budget']
     peliculas_info['retorno'] = peliculas_info['return']
 
-    # Preparar la salida
     resultados = []
     for _, row in peliculas_info.iterrows():
         resultado = (
@@ -167,6 +228,20 @@ def get_director(nombre_director: str):
 
 @app.get("/recomendacion/{title}")
 def recomendacion(title):
+    """
+    Genera recomendaciones de películas basadas en la similitud de resúmenes de películas (sinopsis) mediante TF-IDF y similitud del coseno.
+
+    Parámetros:
+    title (str): El título de la película para la cual se desea obtener recomendaciones.
+
+    Retorna:
+    pandas.Series: Una lista con los títulos de las 5 películas más similares en términos de su sinopsis.
+    
+    Lanza:
+    ValueError: Si el título de la película no se encuentra en el DataFrame.
+
+    """
+
     # Vectorizar los resúmenes utilizando TF-IDF
     vectorizer = TfidfVectorizer()
     tfidf_matrix = vectorizer.fit_transform(dfMoviesFinal['processed_overview'])
