@@ -4,3 +4,6 @@ uvicorn==0.30.6
 pyarrow==17.0.0
 fastparquet==2024.5.0
 scikit-learn==1.5.2
+numpy==2.1.1  
+regex==2024.9.11 
+threadpoolctl==3.
