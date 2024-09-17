@@ -3,8 +3,15 @@ import uvicorn
 import pandas as pd
 import json as json
 
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+import nltk
+
+
 app = FastAPI()
 
+# uvicorn main:app --reload 
 
 # Cargar data frames
 dfMoviesFinal = pd.read_parquet('DataSets/dfMoviesSintetico.parquet')
@@ -119,6 +126,7 @@ def get_actor(nombre_actor: str):
     return (f"El actor {nombre_actor} ha participado en {cantidad_peliculas} películas, "
             f"con un retorno total de {retorno_total*100:.2f}% y un promedio de {retorno_promedio*100:.2f}% por filmación.")
 
+
 @app.get("/director/{nombre_director}")
 def get_director(nombre_director: str):
     # Filtrar el DataFrame dfCreditsFinal para encontrar las películas dirigidas por el director
@@ -155,3 +163,28 @@ def get_director(nombre_director: str):
         resultados.append(resultado)
     
     return "\n".join(resultados)
+
+
+@app.get("/recomendacion/{title}")
+def recomendacion(title):
+    # Vectorizar los resúmenes utilizando TF-IDF
+    vectorizer = TfidfVectorizer()
+    tfidf_matrix = vectorizer.fit_transform(dfMoviesFinal['processed_overview'])
+
+    # Verificar si el título existe en el DataFrame
+    if title not in dfMoviesFinal['title'].values:
+        raise ValueError(f"El título '{title}' no se encuentra en el DataFrame.")
+    
+    # Obtener el resumen preprocesado de la película dada
+    processed_summary = dfMoviesFinal[dfMoviesFinal['title'] == title]['processed_overview'].values[0]
+    query_vector = vectorizer.transform([processed_summary])
+
+    # Calcular la similitud del coseno entre la película consultada y todas las demás
+    cosine_sim = cosine_similarity(query_vector, tfidf_matrix).flatten()
+
+    # Obtener los índices de las 5 películas más similares
+    similar_indices = cosine_sim.argsort()[-6:-1][::-1]
+
+    # Obtener las 5 películas más similares
+    recommended_movies = dfMoviesFinal.iloc[similar_indices]
+    return recommended_movies[['title', 'overview']]
