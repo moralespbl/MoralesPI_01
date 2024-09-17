@@ -187,4 +187,4 @@ def recomendacion(title):
 
     # Obtener las 5 películas más similares
     recommended_movies = dfMoviesFinal.iloc[similar_indices]
-    return recommended_movies[['title', 'overview']]
+    return recommended_movies['title']
