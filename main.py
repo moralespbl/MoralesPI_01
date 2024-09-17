@@ -17,13 +17,11 @@ dfMoviesFinal['id_pelicula'] = dfMoviesFinal['id_pelicula'].astype(float)
 dfCrewFinal['id_pelicula'] = dfCrewFinal['id_pelicula'].astype(float)
 dfCastFinal['id_pelicula'] = dfCastFinal['id_pelicula'].astype(float)
 
-# Convertir 'id_pelicula' en dfMoviesFinal a tipo str
-
 
 # Convertir la columna 'release_date' a tipo datetime
 dfMoviesFinal['release_date'] = pd.to_datetime(dfMoviesFinal['release_date'])
 
-@app.get("/filmaciones/mes/{mes}")
+@app.get("/filmaciones_por_mes/{mes}")
 def cantidad_filmaciones_mes(mes: str):
     meses_dict = {
         'enero': 1, 'febrero': 2, 'marzo': 3, 'abril': 4, 'mayo': 5, 'junio': 6,
@@ -31,12 +29,10 @@ def cantidad_filmaciones_mes(mes: str):
     }
     mes = mes.lower()
     if mes not in meses_dict:
-        raise ValueError("Mes no válido. Debe ser uno de los siguientes: enero, febrero, marzo, abril, mayo, junio, julio, agosto, septiembre, octubre, noviembre, diciembre.")
+        raise ValueError("Error ingrese uno de los meses del año en letras por favor.")
     mes_numero = meses_dict[mes]
- 
-    dfMoviesFinal['mes'] = dfMoviesFinal['release_date'].dt.month
-    df_mes = dfMoviesFinal[dfMoviesFinal['mes'] == mes_numero]
-    cantidad = df_mes['id_pelicula'].nunique()
+
+    cantidad = dfMoviesFinal[dfMoviesFinal['release_date'].dt.month == mes_numero]['id_pelicula'].nunique()
     
     return f"{cantidad} películas fueron estrenadas en el mes de {mes}"
 
