@@ -86,4 +86,4 @@ Este proyecto fue realizado por Pablo Alberto Morales Valeriano
 ## 9. Links Entregables:
 - [API](https://moralespi-01.onrender.com/docs)
 - [Repo de github](https://github.com/moralespbl/MoralesPI_01.git)
-- [Video]
+- [Video](https://1drv.ms/v/s!Aj2cX0aTkbryhqFF2-OH_zoRHDrVwQ?e=N0UShB)
