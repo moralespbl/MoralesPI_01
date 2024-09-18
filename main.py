@@ -212,18 +212,14 @@ def get_director(nombre_director: str):
     peliculas_info['ganancia'] = peliculas_info['revenue'] - peliculas_info['budget']
     peliculas_info['retorno'] = peliculas_info['return']
 
-    resultados = []
     for _, row in peliculas_info.iterrows():
-        resultado = (
+        print (
             f"Película: {row['title']}, "
             f"Fecha de lanzamiento: {row['release_date']}, "
             f"Retorno: {row['retorno']*100:.2f}%, "
             f"Costo: ${row['budget']:.2f}, "
             f"Ganancia: ${row['ganancia']:.2f}"
         )
-        resultados.append(resultado)
-    
-    return "\n".join(resultados)
 
 
 @app.get("/recomendacion/{title}")
